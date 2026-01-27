@@ -11,7 +11,7 @@ FROM node:18-slim
 
 # Install system tools and PM2
 RUN apt-get update && \
-    apt-get install -y lsof net-tools procps && \
+    apt-get install -y lsof net-tools procps docker.io && \
     rm -rf /var/lib/apt/lists/* && \
     npm install -g pm2
 

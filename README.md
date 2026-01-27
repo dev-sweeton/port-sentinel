@@ -4,7 +4,7 @@
 
 **PortSentinel** is a modern, high-performance dashboard for monitoring and managing your localhost ports and processes. Built with a Cyberpunk aesthetic, it provides developers with instant visibility into network activity and powerful control over running services.
 
-![PortSentinel Dashboard](https://via.placeholder.com/800x450.png?text=PortSentinel+Dashboard+Preview)
+![PortSentinel Dashboard](images/dashboard.png)
 
 ## 🚀 Features
 
@@ -49,8 +49,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/portsentinel.git
-cd portsentinel
+git clone https://github.com/dev-sweeton/port-sentinel.git
+cd port-sentinel
 
 # Start the service
 docker-compose up -d
@@ -65,8 +65,8 @@ Due to Docker Desktop's VM architecture, you need to run the host agent natively
 **Step 1: Start the Native Host Agent**
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/portsentinel.git
-cd portsentinel
+git clone https://github.com/dev-sweeton/port-sentinel.git
+cd port-sentinel
 
 # Install and start host agent
 cd host-agent
@@ -107,8 +107,8 @@ HOST_AGENT_URL=http://localhost:3002 node server.js
 ```
 
 Access at `http://localhost:3001`
-git clone https://github.com/your-username/portsentinel.git
-cd portsentinel
+git clone https://github.com/dev-sweeton/port-sentinel.git
+cd port-sentinel
 
 # Install Backend Dependencies
 cd backend

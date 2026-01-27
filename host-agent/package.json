@@ -1,0 +1,13 @@
+{
+    "name": "portsentinel-host-agent",
+    "version": "1.0.0",
+    "description": "Host agent for PortSentinel - monitors native host processes",
+    "main": "agent.js",
+    "scripts": {
+        "start": "node agent.js"
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "cors": "^2.8.5"
+    }
+}

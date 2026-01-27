@@ -26,6 +26,9 @@ services:
     environment:
       - NODE_ENV=production
 
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
     restart: unless-stopped
   # ============================================
   # macOS/WINDOWS DEPLOYMENT (UI Only)
