@@ -279,7 +279,7 @@ const getProcessList = async () => {
             if (isDockerProxy) {
                 const containerName = dockerMap.get(enrichedProc.port);
                 if (containerName) {
-                    enrichedProc.name = `docker:${containerName}`;
+                    enrichedProc.name = containerName;
                     enrichedProc.commandPath = `Docker Container: ${containerName}`;
                 }
             }

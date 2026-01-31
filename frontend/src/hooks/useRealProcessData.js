@@ -37,7 +37,10 @@ export const useRealProcessData = () => {
 
     const fetchProcesses = useCallback(async () => {
         try {
-            const response = await fetch('http://localhost:3001/api/processes');
+            // Use relative path for production (served by backend)
+            // In dev (Vite), proxy in vite.config.js handles this
+            const endpoint = import.meta.env.PROD ? '/api/processes' : 'http://localhost:3001/api/processes';
+            const response = await fetch(endpoint);
             if (!response.ok) {
                 throw new Error('Failed to fetch processes');
             }
@@ -114,9 +117,12 @@ export const useRealProcessData = () => {
                     let status = 'healthy';
                     if (newCpu > 80) status = 'warning';
 
+                    // Preserve favorite status
+                    const wasFavorite = currentPorts.find(p => p.port === proc.port)?.isFavorite || false;
+
                     return {
                         port: proc.port,
-                        name: proc.name.length > 20 ? proc.name.substring(0, 20) + '...' : proc.name,
+                        name: proc.name,
                         pid: proc.pid,
                         type: 'process', // Generic
                         category,
@@ -130,7 +136,7 @@ export const useRealProcessData = () => {
                         totalTraffic: (trafficIn + trafficOut) * 10, // Simulated accumulation
                         history: newHistory,
                         dependencies: [],
-                        isFavorite: false, // Could persist this in localStorage later
+                        isFavorite: wasFavorite,
                         commandPath: proc.commandPath,
                     };
                 });
@@ -182,7 +188,8 @@ export const useRealProcessData = () => {
 
     const killProcess = useCallback(async (pid) => {
         try {
-            const response = await fetch('http://localhost:3001/api/kill', {
+            const endpoint = import.meta.env.PROD ? '/api/kill' : 'http://localhost:3001/api/kill';
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -5,7 +5,7 @@
 
 **PortSentinel** is the ultimate localhost process manager. It gives you a "God Mode" dashboard to monitor, manage, and kill processes running on your server.
 
-> **⚠️ BETA NOTICE**: This release is optimized for **Linux** environments. Support for macOS/Windows is currently experimental.
+> **⚠️ BETA NOTICE**: This release is fully functional on **Linux** and **Windows (WSL)**. Support for **macOS Terminal** is currently **under development**.
 
 ![Dashboard](images/dashboard.png)
 
@@ -16,16 +16,18 @@ Run PortSentinel with a single command (similar to Dozzle/Portainer).
 ```bash
 docker run -d \
   --name portsentinel \
-  --restart always \
+  --restart unless-stopped \
   --pid host \
   --network host \
   --privileged \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  portsentinel:latest
+  sweetnotfound/portsentinel:v1.0.0-beta
 ```
 
 **That's it!** Access your dashboard at:
 > **http://localhost:3001**
+
+**Note**: The default port is **3001**. To change it, add `-e PORT=XXXX` to your docker command.
 
 ### 🐳 Docker Compose
 
@@ -45,6 +47,14 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 ```
+
+### 🪟 Windows (WSL 2)
+
+If you are using **WSL 2** (Ubuntu/Debian on Windows), PortSentinel works perfectly!
+
+Run the **exact same Linux command** above inside your WSL terminal.
+*   It will monitor all processes running inside your WSL instance.
+*   **Note**: To access the dashboard, you can still use `http://localhost:3001` from your Windows browser.
 
 ---
 
@@ -82,7 +92,7 @@ If you want to build the image yourself:
 
 ## 🤝 Contributing
 
-Found a bug in the Beta? Open an issue!
+If you encounter any issues or have questions, please [create an issue in the repository](https://github.com/dev-sweeton/port-sentinel/issues).
 
 1. Fork the repo
 2. Create your feature branch (`git checkout -b feature/cool-new-thing`)
