@@ -212,6 +212,43 @@ const getDockerContainerInfo = async () => {
     }
 };
 
+const getProcessStats = async (pids, platform) => {
+    if (pids.length === 0) return new Map();
+
+    try {
+        const statsMap = new Map();
+
+        if (platform === 'win32') {
+            // Windows: Use wmic (Batching might be tricky, doing simplified check or individual)
+            // For performance, we might skip bulk stats on Windows in this iteration or use a loop
+            // Keeping it simple for now (simulation fallback in frontend if 0)
+            return statsMap;
+        } else {
+            // Linux/macOS: ps -p ... -o pid,%cpu,%mem
+            const pidList = pids.join(',');
+            // Limit command length issues by chunking if necessary, but 100 pids is usually fine
+            // Using 'pid,pcpu,pmem' for portability. Not all ps support %cpu directly without -o
+            const { stdout } = await execPromise(`ps -p ${pidList} -o pid,pcpu,pmem`);
+
+            const lines = stdout.trim().split('\n');
+            // Skip header
+            for (let i = 1; i < lines.length; i++) {
+                const parts = lines[i].trim().split(/\s+/);
+                if (parts.length >= 3) {
+                    const pid = parseInt(parts[0]);
+                    const cpu = parseFloat(parts[1]);
+                    const mem = parseFloat(parts[2]);
+                    statsMap.set(pid, { cpu: cpu || 0, memory: mem || 0 });
+                }
+            }
+        }
+        return statsMap;
+    } catch (e) {
+        // ps might fail if some PIDs are gone
+        return new Map();
+    }
+};
+
 const getProcessList = async () => {
     const { scan, platform } = getSystemCommands();
     try {
@@ -224,10 +261,16 @@ const getProcessList = async () => {
         // Common process names that act as Docker proxies or are related to Docker runtime on various OSes
         const dockerProxyNames = ['docker-pr', 'com.docker.backend', 'vpnkit', 'ssh', 'limactl', 'com.docker.vpnkit'];
 
+        // Optimization: Fetch stats for all PIDs in one go (Unix only)
+        const pids = basicList.map(p => p.pid);
+        const statsMap = await getProcessStats(pids, platform);
+
         // Deep Inspection: concurrently fetch details for valid PIDs
         const detailedList = await Promise.all(basicList.map(async (proc) => {
             const details = await getProcessDetailed(proc.pid, platform);
-            let enrichedProc = { ...proc, ...details };
+            const stats = statsMap.get(proc.pid) || { cpu: 0, memory: 0 };
+
+            let enrichedProc = { ...proc, ...details, ...stats };
 
             // Enrich Docker proxy processes with container names
             const procName = (enrichedProc.name || '').toLowerCase();
@@ -255,7 +298,19 @@ const getProcessList = async () => {
     }
 };
 
-const killProcess = async (pid) => {
+const killProcess = async (pid, commandPath) => {
+    // Check if this is a Docker container
+    if (commandPath && commandPath.startsWith('Docker Container: ')) {
+        const containerName = commandPath.split(': ')[1];
+        try {
+            await execPromise(`docker rm -f ${containerName}`);
+            return true;
+        } catch (e) {
+            console.error(`Failed to kill docker container ${containerName}:`, e);
+            // Fallback to regular kill just in case (though it might not work as intended for containers)
+        }
+    }
+
     const { kill } = getSystemCommands();
     const command = kill(pid);
     await execPromise(command);

@@ -1,163 +1,99 @@
-# PortSentinel: The Ultimate Localhost Process Manager 🛡️
+# PortSentinel (Linux Beta) 🛡️
 
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/sweeton)
+[![Linux Beta](https://img.shields.io/badge/Release-Beta_Linux-orange?style=for-the-badge&logo=linux)](https://github.com/dev-sweeton/port-sentinel)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=for-the-badge&logo=docker)](https://hub.docker.com/)
 
-**PortSentinel** is a modern, high-performance dashboard for monitoring and managing your localhost ports and processes. Built with a Cyberpunk aesthetic, it provides developers with instant visibility into network activity and powerful control over running services.
+**PortSentinel** is the ultimate localhost process manager. It gives you a "God Mode" dashboard to monitor, manage, and kill processes running on your server.
 
-![PortSentinel Dashboard](images/dashboard.png)
+> **⚠️ BETA NOTICE**: This release is optimized for **Linux** environments. Support for macOS/Windows is currently experimental.
 
-## 🚀 Features
+![Dashboard](images/dashboard.png)
 
-### 🔍 Deep Inspection & Monitoring
-- **Real-time Monitoring**: Polling interval of 3000ms keeps you up-to-date.
-- **Deep Process Info**: Hover over processes to see the full command path and arguments.
-- **Security Audit**: 
-    - 🟢 **Local Only Badge**: Confirms process is bound to loopback (`127.0.0.1`, `::1`).
-    - 🔴 **Exposed Badge**: Warns if a process is listening on all interfaces (`0.0.0.0`) or public IPs.
+## 🚀 Quick Start (Docker)
 
-### ⚡ Powerful Control
-- **One-Click Kill**: Terminate processes instantly with a safety confirmation step.
-- **Bulk Actions**: Select multiple processes via checkboxes or "Quick Select" (e.g., select all `node` processes) and kill them simultaneously.
-- **Smart Nuke Bar**: Floating action bar for managing bulk selections.
-- **System Safeguards**: Prevents accidental termination of critical system processes (PID 0, 1) and the PortSentinel server itself.
-
-### 🔥 The Phoenix (Process Recovery)
-- **Restart Capability**: Accidentally killed a process? A "Ghost Row" with a **RESTART** button appears for 30 seconds.
-- **One-Tap Revival**: Attempts to re-run the killed command in its original working directory.
-
-### 🛑 Graceful Shutdown
-- **Remote Shutdown**: Turn off the PortSentinel server directly from the UI with the Power Button.
-
----
-
-## 🛠️ Tech Stack
-
-- **Frontend**: React (Vite), Tailwind CSS, Lucide Icons, React Query.
-- **Backend**: Node.js, Express, Native `child_process` (exec).
-- **Containerization**: Docker, Docker Compose (Multi-stage builds).
-
----
-
-## 📦 Installation & Usage
-
-> [!IMPORTANT]
-> **Platform Differences:**
-> - **Linux**: Single Docker container with full host access ✅
-> - **macOS/Windows**: Docker runs in a VM, so you need to run the host agent natively + Docker UI
-
-### Linux Deployment (Production - One Command!)
+Run PortSentinel with a single command (similar to Dozzle/Portainer).
 
 ```bash
-# Clone the repository
-git clone https://github.com/dev-sweeton/port-sentinel.git
-cd port-sentinel
-
-# Start the service
-docker-compose up -d
+docker run -d \
+  --name portsentinel \
+  --restart always \
+  --pid host \
+  --network host \
+  --privileged \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  portsentinel:latest
 ```
 
-**That's it!** Access at `http://localhost:3001`
+**That's it!** Access your dashboard at:
+> **http://localhost:3001**
 
-### macOS/Windows Deployment (Two Components)
+### 🐳 Docker Compose
 
-Due to Docker Desktop's VM architecture, you need to run the host agent natively:
+If you prefer `docker-compose.yml`:
 
-**Step 1: Start the Native Host Agent**
-```bash
-# Clone the repository
-git clone https://github.com/dev-sweeton/port-sentinel.git
-cd port-sentinel
-
-# Install and start host agent
-cd host-agent
-npm install
-node agent.js
-```
-
-The host agent will run on `http://127.0.0.1:3002` and monitor your **actual macOS/Windows processes**.
-
-**Step 2: Start the Docker UI (in a new terminal)**
-```bash
-cd portsentinel
-
-# Edit docker-compose.yml:
-# - Comment out the 'portsentinel' service (lines 8-28)
-# - Uncomment the 'portsentinel-ui' service (lines 35-49)
-
-docker-compose up -d
-```
-
-**Step 3: Access**
-Open `http://localhost:3001` - you'll see your **real host machine's processes**!
-
-### Alternative: Full Native (No Docker)
-
-For macOS/Windows, you can run everything natively:
-
-```bash
-# Terminal 1: Host Agent
-cd host-agent
-npm install
-node agent.js
-
-# Terminal 2: Backend
-cd backend
-npm install
-HOST_AGENT_URL=http://localhost:3002 node server.js
-```
-
-Access at `http://localhost:3001`
-git clone https://github.com/dev-sweeton/port-sentinel.git
-cd port-sentinel
-
-# Install Backend Dependencies
-cd backend
-npm install
-
-# Install Frontend Dependencies
-cd ../frontend
-npm install
-
-# Start the App (Concurrent)
-# From the root directory:
-npm start 
-# OR manually run backend & frontend in separate terminals
+```yaml
+version: '3.8'
+services:
+  portsentinel:
+    image: portsentinel:latest
+    container_name: portsentinel
+    restart: always
+    # Critical for monitoring the host system
+    pid: host
+    network_mode: host
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 ```
 
 ---
 
-## 🔌 API Reference
+## ✨ Features
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/processes` | List all active listening processes. |
-| `POST` | `/api/kill` | Kill a specific PID. Body: `{ "pid": 1234 }` |
-| `POST` | `/api/kill-bulk` | Kill multiple PIDs. Body: `{ "pids": [123, 456] }` |
-| `POST` | `/api/restart` | Restart a recently killed process. Body: `{ "pid": 1234 }` |
-| `POST` | `/api/shutdown` | Gracefully shut down the PortSentinel server. |
+- **🔥 Process Control**: View specific details, kill processes, or bulk-terminate memory hogs.
+- **🛡️ Security Audit**: Instantly spot processes listening on public interfaces (`0.0.0.0`) vs localhost.
+- **⚡ Real-Time**: Live updates (1s interval) of CPU, Memory, and Network usage.
+- **🧹 Auto-Cleanup**: Prevents accidental killing of system-critical PIDs (0, 1).
+- **📋 Log Viewer**: Watch live logs/output stream for any running process (Beta).
 
 ---
 
-## ☕ Support
+## 🛠️ Building from Source
 
-If you find PortSentinel helpful, consider buying me a coffee! Your support helps maintain the project and keep the updates coming.
+If you want to build the image yourself:
 
-<a href="https://buymeacoffee.com/sweeton" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+1. **Clone the repo**
+   ```bash
+   git clone https://github.com/dev-sweeton/port-sentinel.git
+   cd port-sentinel
+   ```
+
+2. **Build the Image**
+   ```bash
+   docker build -t portsentinel:latest .
+   ```
+
+3. **Run**
+   ```bash
+   docker-compose up -d
+   ```
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Found a bug in the Beta? Open an issue!
 
-1. Fork the project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
+1. Fork the repo
+2. Create your feature branch (`git checkout -b feature/cool-new-thing`)
+3. Commit your changes
+4. Push to the branch
 5. Open a Pull Request
 
 ---
 
-## 📄 License
+## ☕ Support
 
-Distributed under the MIT License. See `LICENSE` for more information.
+If PortSentinel saved your server from a rogue process, consider buying a coffee!
+
+<a href="https://buymeacoffee.com/sweeton" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>

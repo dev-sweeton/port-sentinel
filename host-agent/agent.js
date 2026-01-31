@@ -82,6 +82,36 @@ async function getDockerContainerInfo() {
 }
 
 /**
+ * Fetch CPU/Memory stats for a list of PIDs
+ */
+async function getProcessStats(pids) {
+    if (pids.length === 0) return new Map();
+    const statsMap = new Map();
+
+    try {
+        if (platform === 'darwin' || platform === 'linux') {
+            const pidList = pids.join(',');
+            // ps -p 123,456 -o pid,pcpu,pmem
+            const { stdout } = await execAsync(`ps -p ${pidList} -o pid,pcpu,pmem`);
+            const lines = stdout.trim().split('\n');
+            // Skip header
+            for (let i = 1; i < lines.length; i++) {
+                const parts = lines[i].trim().split(/\s+/);
+                if (parts.length >= 3) {
+                    const pid = parseInt(parts[0]);
+                    const cpu = parseFloat(parts[1]);
+                    const mem = parseFloat(parts[2]);
+                    statsMap.set(pid, { cpu: cpu || 0, memory: mem || 0 });
+                }
+            }
+        }
+    } catch (e) {
+        // Ignore errors (processes might have exited)
+    }
+    return statsMap;
+}
+
+/**
  * Get list of processes listening on ports
  */
 async function getProcessList() {
@@ -104,11 +134,18 @@ async function getProcessList() {
         // Get Docker container info for enrichment
         const dockerMap = await getDockerContainerInfo();
 
+        // Get Stats (CPU/Mem)
+        const pids = processes.map(p => p.pid);
+        const statsMap = await getProcessStats(pids);
+
         // Common process names that act as Docker proxies or are related to Docker runtime on various OSes
         const dockerProxyNames = ['docker-pr', 'com.docker.backend', 'vpnkit', 'ssh', 'limactl', 'com.docker.vpnkit'];
 
         // Enrich Docker proxy processes with container names
         const enrichedProcesses = processes.map(proc => {
+            const stats = statsMap.get(proc.pid) || { cpu: 0, memory: 0 };
+            const procWithStats = { ...proc, ...stats };
+
             const procName = (proc.name || '').toLowerCase();
             const isDockerProxy = dockerProxyNames.some(dName => procName.includes(dName));
 
@@ -116,13 +153,13 @@ async function getProcessList() {
                 const containerName = dockerMap.get(proc.port);
                 if (containerName) {
                     return {
-                        ...proc,
+                        ...procWithStats,
                         name: `docker:${containerName}`,
                         commandPath: `Docker Container: ${containerName}`
                     };
                 }
             }
-            return proc;
+            return procWithStats;
         });
 
         return enrichedProcesses;
@@ -214,8 +251,20 @@ function parseProcessOutput(output) {
 /**
  * Kill a process by PID
  */
+/**
+ * Kill a process by PID
+ */
 async function killProcess(pid) {
     try {
+        // Check if this is a Docker container based on archived info
+        const archived = recentKills.get(parseInt(pid));
+        if (archived && archived.command && archived.command.startsWith('Docker Container: ')) {
+            const containerName = archived.command.split(': ')[1];
+            console.log(`[Phoenix] Detected Docker Container: ${containerName}. using docker rm -f ...`);
+            await execAsync(`docker rm -f ${containerName}`);
+            return { success: true, method: 'docker-kill' };
+        }
+
         let command;
 
         if (platform === 'win32') {

@@ -56,10 +56,18 @@ if (PROXY_MODE) {
     });
 }
 
+app.use((req, res, next) => {
+    console.log(`[Request] ${req.method} ${req.url}`);
+    next();
+});
+
 // Serve static files from the React app
-if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, '../frontend/dist')));
-}
+console.log(`[Server] NODE_ENV: [${process.env.NODE_ENV}]`);
+const staticPath = path.join(__dirname, '../frontend/dist');
+console.log(`[Server] Serving static files from: ${staticPath}`);
+
+// Force static serving for debugging (removed if check)
+app.use(express.static(staticPath));
 
 // Middleware to prevent killing system PIDs
 const safetyGuard = (req, res, next) => {
@@ -111,7 +119,9 @@ if (!PROXY_MODE) {
 
         try {
             await archiveProcess(pid);
-            const result = await killProcess(pid);
+            const archived = recentKills.get(parseInt(pid));
+            const commandPath = archived ? archived.command : null;
+            const result = await killProcess(pid, commandPath);
             res.json({ message: `Process ${pid} killed successfully`, result });
         } catch (error) {
             console.error(`Error killing process ${pid}:`, error);
@@ -148,7 +158,9 @@ if (!PROXY_MODE) {
             }
 
             try {
-                await killProcess(parsedPid);
+                const archived = recentKills.get(parsedPid);
+                const commandPath = archived ? archived.command : null;
+                await killProcess(parsedPid, commandPath);
                 results.success.push(parsedPid);
             } catch (error) {
                 results.failed.push({ pid: parsedPid, error: error.message });

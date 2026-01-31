@@ -11,7 +11,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: portsentinel:latest
+    image: portsentinel:test
     container_name: portsentinel
 
     # Enable Host Networking - Required to monitor host network stack
