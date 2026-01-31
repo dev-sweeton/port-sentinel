@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # LINUX DEPLOYMENT (Single Container)
+  # ============================================
+  # Use this for Linux servers where Docker has
+  # direct access to the host PID namespace
+  # ============================================
+  portsentinel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: portsentinel:test
+    container_name: portsentinel
+
+    # Enable Host Networking - Required to monitor host network stack
+    network_mode: host
+
+    # Enable Host PID Namespace - Required to see and manage host processes
+    pid: host
+
+    # Grant Privileged Access - Required to kill host processes
+    privileged: true
+
+    environment:
+      - NODE_ENV=production
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    restart: unless-stopped
+  # ============================================
+  # macOS/WINDOWS DEPLOYMENT (UI Only)
+  # ============================================
+  # Use this when running the host agent natively
+  # on your macOS/Windows machine
+  # ============================================
+  # portsentinel-ui:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   image: portsentinel:latest
+  #   container_name: portsentinel
+  #   
+  #   ports:
+  #     - "3001:3001"
+  #   
+  #   environment:
+  #     - NODE_ENV=production
+  #     - HOST_AGENT_URL=http://host.docker.internal:3002
+  #   
+  #   restart: unless-stopped

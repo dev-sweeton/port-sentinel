@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    @apply bg-cyber-bg text-cyber-text font-mono antialiased;
+}
+
+/* Custom scrollbar for cyberpunk feel */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    @apply bg-cyber-bg;
+}
+::-webkit-scrollbar-thumb {
+    @apply bg-cyber-surface rounded border border-cyber-dim/20;
+}
+::-webkit-scrollbar-thumb:hover {
+    @apply bg-cyber-dim/50;
+}

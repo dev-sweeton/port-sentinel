@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  portsentinel-mac-test:
+    image: portsentinel:test
+    container_name: portsentinel-mac-test
+    ports:
+      - "3001:3001"
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      # On Mac, we can't truly see host processes via Docker
+      # So host-agent inside docker will only see docker processes
+      # But this verifies the UI loads!
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
